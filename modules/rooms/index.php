@@ -38,7 +38,8 @@
                 <th>Số phòng</th>
                 <th>Giá</th>
                 <th>Số người</th>
-                <th>Mô tả</th>
+                <th>Loại phòng</th>
+                <th>Trạng thái</th>
                 <th>Thao tác</th>
             </tr>
 
@@ -50,11 +51,11 @@
                 ?>
                     <tr>
                         <td><?= $row['room_id']; ?></td>
-                        <td><?= $row['room_name']; ?></td>
+                        <td><?= $row['room_number']; ?></td>
                         <td><?= number_format($row['price']); ?></td>
                         <td><?= $row['max_people']; ?></td>
-                        <td><?= $row['description']; ?></td>
-
+                        <td><?= $row['type_name']; ?></td>
+                        <td><?= $row['status']; ?></td>
                         <td>
                             <a href="edit.php?id=<?= $row['room_id']; ?>"
                                 class="btn btn-warning btn-sm">

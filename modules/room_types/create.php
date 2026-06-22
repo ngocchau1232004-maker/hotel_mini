@@ -1,4 +1,5 @@
 <?php
+    include '../../includes/auth.php';
     include '../../config/database.php';
 
     /** @var mysqli $conn */
@@ -11,18 +12,8 @@
         $max_people = $_POST['max_people'];
         $description = $_POST['description'];
 
-        $sql = "INSERT INTO room_types(
-                type_name,
-                price,
-                max_people,
-                description
-                )
-                VALUES(
-                '$type_name',
-                '$price',
-                '$max_people',
-                '$description'
-                )";
+        $sql = "INSERT INTO room_types(type_name, price, max_people, description)
+                    VALUES('$type_name','$price','$max_people','$description')";
 
         mysqli_query($conn,$sql);
 
@@ -65,8 +56,18 @@
             <textarea name="description" class="form-control"></textarea>
             <br>
 
-            <button class="btn btn-success" name="save"> Lưu </button>
+    
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success" name="save">
+                    Thêm
+                </button>
 
+                <a href="index.php" class="btn btn-secondary">
+                    Trở về
+                </a>
+            </div>
+                
+           
         </form>
 
     </div>

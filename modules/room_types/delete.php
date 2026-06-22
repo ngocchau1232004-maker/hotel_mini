@@ -1,4 +1,5 @@
 <?php
+    include '../../includes/auth.php';
     include '../../config/database.php';
 
     /** @var mysqli $conn */ 

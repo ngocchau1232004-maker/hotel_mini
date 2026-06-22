@@ -57,14 +57,14 @@
                         Quản lý phòng
                     </a>
 
-                    <a href="modules/customers/index.php"
-                        class="list-group-item list-group-item-action">
-                        Quản lý khách hàng
-                    </a>
-
                     <a href="modules/bookings/index.php"
                         class="list-group-item list-group-item-action">
                         Quản lý đặt phòng
+                    </a>
+
+                    <a href="modules/customers/index.php"
+                        class="list-group-item list-group-item-action">
+                        Quản lý khách hàng
                     </a>
 
                     <a href="modules/invoices/index.php"
