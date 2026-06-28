@@ -27,8 +27,7 @@
         
         <h2>Quản lý phòng</h2>
 
-        <a href="create.php"
-            class="btn btn-success mb-3">
+        <a href="create.php" class="btn btn-success mb-3">
             Thêm phòng
         </a>
 

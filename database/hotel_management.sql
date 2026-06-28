@@ -22,7 +22,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(15),
     email VARCHAR(100),
-    role_id INT,
+    role_id INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (role_id) 
@@ -54,12 +54,12 @@ CREATE TABLE rooms (
     room_id INT AUTO_INCREMENT PRIMARY KEY,
     room_number VARCHAR(20) NOT NULL UNIQUE,
     room_type_id INT,
-    status ENUM(
-        'Trống', 
-        'Đã đặt', 
-        'Đang thuê', 
-        'Bảo trì'
-    ) DEFAULT 'Trống',
+        status ENUM(
+            'Trống', 
+            'Đã đặt', 
+            'Đang thuê', 
+            'Bảo trì'
+        ) DEFAULT 'Trống',
 
     FOREIGN KEY (room_type_id) 
     REFERENCES room_types(room_type_id)
@@ -83,10 +83,14 @@ CREATE TABLE customers (
 -- bookings (đặt phòng)
 CREATE TABLE bookings (
     booking_id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT,
+    customer_id INT NOT NULL,
+
     booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    check_in_date DATE,
-    check_out_date DATE,
+    check_in_date DATE NOT NULL,
+    check_out_date DATE NOT NULL,
+
+    actual_check_in DATETIME NULL,
+    actual_check_out DATETIME NULL,
 
     status ENUM(
         'Chờ xác nhận',
@@ -96,7 +100,7 @@ CREATE TABLE bookings (
         'Đã hủy'
     ) DEFAULT 'Chờ xác nhận',
 
-    total_amount INT DEFAULT 0,
+    total_amount INT DEFAULT 0, note TEXT,
 
     FOREIGN KEY (customer_id)
     REFERENCES customers(customer_id)
@@ -106,12 +110,13 @@ CREATE TABLE bookings (
 -- booking_details (chi tiết đặt phòng)
 CREATE TABLE booking_details (
     booking_detail_id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT,
-    room_id INT,
-    price INT,
+    booking_id INT NOT NULL,
+    room_id INT NOT NULL,
+    price INT NOT NULL,
 
     FOREIGN KEY (booking_id)
-    REFERENCES bookings(booking_id),
+    REFERENCES bookings(booking_id)
+    ON DELETE CASCADE,
 
     FOREIGN KEY (room_id)
     REFERENCES rooms(room_id)
@@ -160,7 +165,7 @@ CREATE TABLE invoices (
 -- payments (thanh toán)
 CREATE TABLE payments (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    invoice_id INT,
+    invoice_id INT NOT NULL,
 
     payment_method ENUM(
         'Tiền mặt',
@@ -169,7 +174,7 @@ CREATE TABLE payments (
     ),
 
     payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    amount INT,
+    amount INT NOT NULL,
 
     FOREIGN KEY (invoice_id)
     REFERENCES invoices(invoice_id)
