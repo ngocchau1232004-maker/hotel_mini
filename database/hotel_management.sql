@@ -53,7 +53,7 @@ INSERT INTO room_types(type_name, price, max_people, description)
 CREATE TABLE rooms (
     room_id INT AUTO_INCREMENT PRIMARY KEY,
     room_number VARCHAR(20) NOT NULL UNIQUE,
-    room_type_id INT,
+    room_type_id INT NOT NULL,
         status ENUM(
             'Trống', 
             'Đã đặt', 
@@ -64,6 +64,17 @@ CREATE TABLE rooms (
     FOREIGN KEY (room_type_id) 
     REFERENCES room_types(room_type_id)
 );
+
+INSERT INTO rooms(room_number, room_type_id, status)
+    VALUES
+        ('A101', 1, 'Trống'),
+        ('A102', 1, 'Trống'),
+        ('A103', 1, 'Trống'),
+        ('B201', 2, 'Trống'),
+        ('B202', 2, 'Trống'),
+        ('B203', 2, 'Trống'),
+        ('VIP501', 3, 'Trống'),
+        ('VIP502', 3, 'Trống');
 
 
 
@@ -135,8 +146,8 @@ CREATE TABLE services (
 -- service_usage (sử dụng dịch vụ)
 CREATE TABLE service_usage (
     usage_id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT,
-    service_id INT,
+    booking_id INT NOT NULL,
+    service_id INT NOT NULL,
     quantity INT DEFAULT 1,
     usage_date DATETIME DEFAULT CURRENT_TIMESTAMP,
 
@@ -151,11 +162,12 @@ CREATE TABLE service_usage (
 -- invoices (hóa đơn)
 CREATE TABLE invoices (
     invoice_id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT,
+    booking_id INT NOT NULL,
     invoice_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    room_total INT,
-    service_total INT,
-    total_amount INT,
+    
+    room_total INT DEFAULT 0,
+    service_total INT DEFAULT 0,
+    total_amount INT DEFAULT 0
 
     FOREIGN KEY (booking_id)
     REFERENCES bookings(booking_id)
