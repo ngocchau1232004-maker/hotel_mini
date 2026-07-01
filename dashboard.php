@@ -72,6 +72,11 @@
                         Quản lý hóa đơn
                     </a>
 
+                    <a href="modules/reports/index.php"
+                        class="list-group-item list-group-item-action">
+                        Thống kê doanh thu
+                    </a>
+
                 </div>
 
                 
