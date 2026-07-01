@@ -97,7 +97,7 @@
                                 Sửa
                             </a>
 
-                            <?php if($row['status'] == 'Đã xác nhận'){ ?>
+                            <?php if($row['status'] == 'Đã đặt'){ ?>
                                 <a href="checkin.php?id=<?= $row['booking_id']; ?>"
                                     class="btn btn-success btn-sm"
                                     onclick="return confirm('Xác nhận check-in?')">
