@@ -104,12 +104,11 @@ CREATE TABLE bookings (
     actual_check_out DATETIME NULL,
 
     status ENUM(
-        'Chờ xác nhận',
-        'Đã xác nhận',
+        'Đã đặt',
         'Đang thuê',
         'Đã trả phòng',
         'Đã hủy'
-    ) DEFAULT 'Chờ xác nhận',
+    ) DEFAULT 'Đã đặt',
 
     total_amount INT DEFAULT 0, note TEXT,
 

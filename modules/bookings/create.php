@@ -75,7 +75,7 @@
             // Kiểm tra phòng đã được đặt trong khoảng thời gian này chưa
             $check_sql = "SELECT b.booking_id FROM bookings b JOIN booking_details bd
                 ON b.booking_id = bd.booking_id WHERE bd.room_id = '$room_id'
-                AND b.status IN ('Chờ xác nhận','Đã xác nhận','Đang thuê')
+                AND b.status IN ('Đã đặt','Đang thuê')
                 AND (b.check_in_date < '$check_out' AND b.check_out_date > '$check_in')";
 
             $check_result = mysqli_query($conn, $check_sql);
@@ -120,7 +120,7 @@
 
             // Thêm booking
             $sql = "INSERT INTO bookings(customer_id,check_in_date,check_out_date,total_amount,status)
-                    VALUES('$customer_id','$check_in','$check_out','$total','Chờ xác nhận')";
+                    VALUES('$customer_id','$check_in','$check_out','$total','Đã đặt')";
 
             if(!mysqli_query($conn,$sql)){
                 throw new Exception("Lỗi tạo booking");

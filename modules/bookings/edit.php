@@ -18,7 +18,7 @@
             ON b.booking_id = bd.booking_id
             WHERE bd.room_id = '$room_id'
             AND b.booking_id <> '$id'
-            AND b.status IN ('Chờ xác nhận','Đã xác nhận','Đang thuê')
+            AND b.status IN ('Đã đặt','Đang thuê')
             AND (b.check_in_date < '$check_out' AND b.check_out_date > '$check_in')";
 
         $check_result = mysqli_query($conn, $check_sql);
@@ -203,8 +203,7 @@
                 
                 <?php
                     $list=[
-                        'Chờ xác nhận',
-                        'Đã xác nhận',
+                        'Đã đặt',
                         'Đang thuê',
                         'Đã trả phòng',
                         'Đã hủy'
