@@ -1,138 +1,167 @@
 <?php
-include("../../config/database.php");
+    include '../../includes/auth.php';
+    include '../../config/database.php';
 
-$from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
-$to   = isset($_GET['to']) ? $_GET['to'] : date("Y-m-d");
+    /** @var mysqli $conn */
 
-// Tổng doanh thu
-$sqlSummary = "
-SELECT
-COUNT(*) total_invoice,
-IFNULL(SUM(room_total),0) room_revenue,
-IFNULL(SUM(service_total),0) service_revenue,
-IFNULL(SUM(total_amount),0) total_revenue
+    $from = $_GET['from'] ?? date("Y-m-01");
+    $to   = $_GET['to'] ?? date("Y-m-d");
+    $isPdf = isset($_GET['pdf']);
 
-FROM invoices
+    //=========================
+    // Thống kê
+    //=========================
+    $sqlSummary = "SELECT COUNT(*) total_invoice,
+                    IFNULL(SUM(room_total),0) room_revenue,
+                    IFNULL(SUM(service_total),0) service_revenue,
+                    IFNULL(SUM(total_amount),0) total_revenue
+                FROM invoices
+                WHERE DATE(invoice_date) BETWEEN '$from' AND '$to'
+    ";
 
-WHERE DATE(invoice_date)
-BETWEEN '$from'
-AND '$to'
-";
+    $resultSummary=mysqli_query($conn,$sqlSummary);
+    $summary=mysqli_fetch_assoc($resultSummary);
 
-$resultSummary=mysqli_query($conn,$sqlSummary);
-$summary=mysqli_fetch_assoc($resultSummary);
+    //=========================
+    // Danh sách hóa đơn
+    //=========================
+    $sql="SELECT
+            invoices.invoice_id,
+            invoices.invoice_date,
+            invoices.room_total,
+            invoices.service_total,
+            invoices.total_amount,
+            customers.full_name
+        FROM invoices
+        LEFT JOIN bookings
+            ON invoices.booking_id=bookings.booking_id
+        LEFT JOIN customers
+            ON bookings.customer_id=customers.customer_id
+        WHERE DATE(invoices.invoice_date)
+        BETWEEN '$from' AND '$to'
+        ORDER BY invoices.invoice_date DESC";
 
-// Danh sách hóa đơn
-$sql="
-SELECT
-
-invoices.invoice_id,
-invoices.invoice_date,
-invoices.room_total,
-invoices.service_total,
-invoices.total_amount,
-
-customers.full_name
-
-FROM invoices
-
-LEFT JOIN bookings
-ON invoices.booking_id=bookings.booking_id
-
-LEFT JOIN customers
-ON bookings.customer_id=customers.customer_id
-
-WHERE DATE(invoices.invoice_date)
-BETWEEN '$from'
-AND '$to'
-
-ORDER BY invoices.invoice_date DESC
-";
-
-$result=mysqli_query($conn,$sql);
+    $result=mysqli_query($conn,$sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Báo cáo doanh thu</title>
+
     <link rel="stylesheet" href="../../assets/css/report-print.css">
 
 </head>
+
 <body>
+    <?php if(!$isPdf){ ?>
+        <div class="toolbar">
+            <button class="btn-print" onclick="window.print()">
+                🖨 In báo cáo
+            </button>
 
-    <h1>BÁO CÁO DOANH THU KHÁCH SẠN</h1>
+            <button class="btn-back" onclick="window.location.href='index.php'">
+                ✖ Đóng
+            </button>
+        </div>
+    <?php } ?>
 
-    <h4>
-        Từ ngày <?=date("d/m/Y",strtotime($from));?>
-        đến <?=date("d/m/Y",strtotime($to));?>
-    </h4>
+    <div class="container">
 
-    <div class="summary">
-        <p>
-            <b>Tổng hóa đơn:</b>
-            <?=$summary['total_invoice'];?>
-        </p>
+        <div class="header">
+            <h3>KHÁCH SẠN MINI HOTEL</h3>
+            <p>Địa chỉ: Cần Thơ</p>
+            <p>Điện thoại: 0123 456 789</p> 
+            <br><hr>
+        </div> <br>
 
-        <p>
-            <b>Doanh thu phòng:</b>
-            <?=number_format($summary['room_revenue']);?> VNĐ
-        </p>
+        <h1>BÁO CÁO DOANH THU KHÁCH SẠN</h1>
 
-        <p>
-            <b>Doanh thu dịch vụ:</b>
-            <?=number_format($summary['service_revenue']);?> VNĐ
-        </p>
+        <h4>
+            Từ ngày <?=date("d/m/Y",strtotime($from));?>
+            đến <?=date("d/m/Y",strtotime($to));?>
+        </h4>
 
-        <p>
-            <b class="total"> Tổng doanh thu:
-                <?=number_format($summary['total_revenue']);?>
-                VNĐ
-            </b>
-        </p>
+        <div class="summary">
+            <p> 
+                <b>Tổng hóa đơn:</b> <?=$summary['total_invoice'];?>
+            </p>
 
+            <p>
+                <b>Doanh thu phòng:</b>
+                <?=number_format($summary['room_revenue']);?> VNĐ
+            </p>
+
+            <p>
+                <b>Doanh thu dịch vụ:</b>
+                <?=number_format($summary['service_revenue']);?> VNĐ
+            </p>
+
+            <p class="total">
+                <strong>
+                    Tổng doanh thu:
+                    <?=number_format($summary['total_revenue']);?> VNĐ
+                </strong>
+            </p>
+        </div>
+
+        <table>
+            <p>
+                Có <b><?=mysqli_num_rows($result);?></b> hóa đơn.
+            </p>
+
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã HĐ</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày lập</th>
+                    <th>Tiền phòng</th>
+                    <th>Tiền DV</th>
+                    <th>Tổng tiền</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <?php
+                $i=1;
+                while($row=mysqli_fetch_assoc($result)){
+                ?>
+                    <tr>
+                        <td><?=$i++;?></td>
+                        <td><?=$row['invoice_id'];?></td>
+                        <td><?=$row['full_name'];?></td>
+                        <td><?=date("d/m/Y",strtotime($row['invoice_date']));?></td>
+                        <td class="money"><?=number_format($row['room_total']);?> VNĐ </td>
+                        <td class="money"><?=number_format($row['service_total']);?> VNĐ</td>
+                        <td class="money"><?=number_format($row['total_amount']);?> VNĐ</td>
+
+                    </tr>
+                <?php } ?>
+            </tbody>
+
+        </table>
+
+        <div class="footer">
+            <p style="margin-right: 30px;">
+                Cần Thơ,
+                ngày <?=date("d");?>
+                tháng <?=date("m");?>
+                năm <?=date("Y");?>
+            </p>
+
+            <strong style="margin-right: 75px;">
+                Người Lập Báo Cáo
+            </strong>
+            <br><br><br>
+
+            <p style="margin-right: 50px;">
+                ................................................
+            </p>
+        </div>
     </div>
 
-    <table>
-        <tr>
-            <th>STT</th>
-            <th>Mã HĐ</th>
-            <th>Khách hàng</th>
-            <th>Ngày lập</th>
-            <th>Tiền phòng</th>
-            <th>Tiền DV</th>
-            <th>Tổng tiền</th>
-        </tr>
-
-        <?php
-            $i=1;
-            while($row=mysqli_fetch_assoc($result)){
-        ?>
-            <tr>
-                <td><?=$i++;?></td>
-                <td><?=$row['invoice_id'];?></td>
-                <td><?=$row['full_name'];?></td>
-                <td><?=date("d/m/Y",strtotime($row['invoice_date']));?></td>
-                <td><?=number_format($row['room_total']);?></td>
-                <td><?=number_format($row['service_total']);?></td>
-                <td><?=number_format($row['total_amount']);?></td>
-            </tr>
-        <?php } ?>
-
-    </table>
-
-    <div class="footer">
-        <p>Cần Thơ, ngày <?=date("d");?> tháng <?=date("m");?> năm <?=date("Y");?></p>
-        <br><br><br>
-        <b>Người lập báo cáo</b>
-    </div>
-
-    <script>
-        window.onload=function(){
-            window.print();
-        }
-    </script>
 </body>
 </html>

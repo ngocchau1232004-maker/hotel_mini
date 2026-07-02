@@ -1,0 +1,135 @@
+body{
+    margin:0;
+    background:#f4f6f9;
+    font-family:Arial, Helvetica, sans-serif;
+    overflow-x:hidden;
+}
+
+/* ================= Sidebar ================= */
+
+.sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:220px;
+    height:100vh;
+    background:#212529;
+    overflow-y:auto;
+    overflow-x:hidden;
+    transition:.3s;
+    z-index:1000;
+}
+
+.sidebar h3{
+    color:#fff;
+    font-weight:bold;
+}
+
+.sidebar hr{
+    border-color:rgba(255,255,255,.15);
+}
+
+.sidebar a{
+    display:block;
+    color:#fff;
+    text-decoration:none;
+    padding:13px 20px;
+    transition:.2s;
+}
+
+.sidebar a:hover{
+    background:#0d6efd;
+}
+
+.sidebar a i{
+    width:24px;
+    margin-right:8px;
+}
+
+/* ============== Content ============== */
+
+.content{
+    margin-left:240px;
+    width:calc(100% - 240px);
+    min-height:100vh;
+    padding:20px;
+    transition:.3s;
+}
+
+/* ============== Topbar ============== */
+
+.topbar{
+    background:#fff;
+    border-radius:10px;
+    padding:15px 20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+
+/* ============== Card ============== */
+
+.card{
+    border:none;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+
+/* ============== Table ============== */
+
+.table{
+    margin-bottom:0;
+}
+
+.table thead th{
+    background:#0d6efd;
+    color:white;
+}
+
+.table td,
+.table th{
+    vertical-align:middle;
+}
+
+.table-responsive{
+    overflow-x:auto;
+}
+
+/* ============== Button ============== */
+
+.btn{
+    border-radius:6px;
+}
+
+/* ============== Collapse Sidebar ============== */
+
+.sidebar.collapsed{
+    width:70px;
+}
+
+.sidebar.collapsed h3{
+    display:none;
+}
+
+.sidebar.collapsed hr{
+    display:none;
+}
+
+.sidebar.collapsed a{
+    text-align:center;
+    padding:15px 0;
+}
+
+.sidebar.collapsed a span{
+    display:none;
+}
+
+.sidebar.collapsed a i{
+    margin:0;
+    font-size:20px;
+}
+
+.content.expanded{
+    margin-left:70px;
+    width:calc(100% - 70px);
+}

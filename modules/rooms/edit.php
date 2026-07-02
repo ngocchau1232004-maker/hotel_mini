@@ -1,6 +1,7 @@
 <?php
     include '../../includes/auth.php';
     include '../../config/database.php';
+    include '../../includes/header.php';
 
     /** @var mysqli $conn */
         $conn = $conn;
@@ -30,15 +31,7 @@
     }
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sửa phòng</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-</head>
 
-<body>
 
     <div class="container mt-4">
 
@@ -118,5 +111,4 @@
 
     </div>
 
-</body>
-</html>
+<?php include __DIR__.'/../../includes/footer.php'; ?>

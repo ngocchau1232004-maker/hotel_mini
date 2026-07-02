@@ -1,144 +1,155 @@
 <?php
     include '../../includes/auth.php';
     include '../../config/database.php';
+    include '../../includes/header.php';
+
+    /** @var mysqli $conn */
+    $conn = $conn;
 
     $id = $_GET['id'];
 
     if(isset($_POST['update'])){
+        mysqli_begin_transaction($conn);
+        try{
+            $customer_id = $_POST['customer_id'];
+            $room_id      = $_POST['room_id'];
 
-        $customer_id = $_POST['customer_id'];
-        $room_id      = $_POST['room_id'];
-        $check_in     = $_POST['check_in_date'];
-        $check_out    = $_POST['check_out_date'];
-        $status       = $_POST['status'];
-        $note         = $_POST['note'];
+            $check_in     = $_POST['check_in_date'];
+            $check_out    = $_POST['check_out_date'];
 
-        // Kiểm tra phòng đã được đặt trong khoảng thời gian này chưa
-        $check_sql = "SELECT b.booking_id FROM bookings b JOIN booking_details bd
-            ON b.booking_id = bd.booking_id
-            WHERE bd.room_id = '$room_id'
-            AND b.booking_id <> '$id'
-            AND b.status IN ('Đã đặt','Đang thuê')
-            AND (b.check_in_date < '$check_out' AND b.check_out_date > '$check_in')";
+            if(strtotime($check_out)<=strtotime($check_in)){
+                header("Location:index.php?error=date");
+                exit();
+            }
 
-        $check_result = mysqli_query($conn, $check_sql);
+            $status       = $_POST['status'];
+            $note         = $_POST['note'];
 
-        if(mysqli_num_rows($check_result) > 0){
-            echo "<script>
-                    alert('Phòng này đã được đặt trong khoảng thời gian đã chọn!');
-                    window.history.back();
-                </script>";
+            // Kiểm tra phòng đã được đặt trong khoảng thời gian này chưa
+            $check_sql = "SELECT b.booking_id FROM bookings b 
+                JOIN booking_details bd
+                    ON b.booking_id = bd.booking_id
+                WHERE bd.room_id = '$room_id'
+                    AND b.booking_id <> '$id'
+                    AND b.status IN ('Đã đặt','Đang thuê')
+                    AND (b.check_in_date < '$check_out' 
+                        AND b.check_out_date > '$check_in')";
+
+            $check_result = mysqli_query($conn, $check_sql);
+
+            if(mysqli_num_rows($check_result) > 0){
+                header("Location:index.php?error=room_exists");
+                exit();
+            }
+
+            // Lấy giá phòng
+            $sqlPrice = "SELECT rt.price FROM rooms r JOIN room_types rt
+                            ON r.room_type_id = rt.room_type_id
+                            WHERE r.room_id='$room_id' ";
+
+            $priceResult = mysqli_query($conn,$sqlPrice);
+            $priceRow = mysqli_fetch_assoc($priceResult);
+                if(!$priceRow){
+                    throw new Exception("Không tìm thấy giá phòng");
+                }
+            $price = $priceRow['price'];
+
+            $days = ceil(
+                (strtotime($check_out)-strtotime($check_in))/86400
+            );
+
+            if($days <= 0) {
+                $days = 1;
+            }
+
+            $total = $price * $days;
+
+            // Lấy phòng cũ
+            $oldRoom = mysqli_query($conn,"SELECT room_id 
+                                            FROM booking_details 
+                                            WHERE booking_id='$id'");
+            $old = mysqli_fetch_assoc($oldRoom);
+            if($old){
+                mysqli_query($conn,"UPDATE rooms
+                                    SET status='Trống'
+                                    WHERE room_id='".$old['room_id']."' ");
+            }
+
+            // Cập nhật booking
+            mysqli_query($conn,"UPDATE bookings
+                                SET customer_id='$customer_id',
+                                    check_in_date='$check_in',
+                                    check_out_date='$check_out',
+                                    status='$status',
+                                    total_amount='$total',
+                                    note='$note'
+                                WHERE booking_id='$id' ");
+
+            // Xóa booking detail cũ
+            mysqli_query($conn,"DELETE FROM booking_details WHERE booking_id='$id' ");
+            
+            // Thêm booking detail mới
+            mysqli_query($conn,"INSERT INTO booking_details(booking_id, room_id, price)
+                                VALUES('$id', '$room_id', '$price')");
+
+            // Cập nhật trạng thái phòng mới
+            if($status == 'Đã đặt'){
+                $roomStatus = "Đã đặt";
+            }elseif($status == 'Đang thuê'){
+                $roomStatus = "Đang thuê";
+            }else{
+                $roomStatus = "Trống";
+            }
+
+            mysqli_query($conn," UPDATE rooms
+                SET status='$roomStatus'
+                WHERE room_id='$room_id'
+            ");
+
+            mysqli_commit($conn);
+            header("Location:index.php");
+            exit();
+        
+        }catch(Exception $e){
+            mysqli_rollback($conn);
+            header("Location:index.php?error=update");
+            exit();
+        }
+    }
+        // Lấy thông tin booking
+        $sql = "SELECT b.*, bd.room_id
+            FROM bookings b
+            LEFT JOIN booking_details bd
+                ON b.booking_id = bd.booking_id
+            WHERE b.booking_id = '$id'";
+
+        $result = mysqli_query($conn,$sql);
+        $row = mysqli_fetch_assoc($result);
+        if(!$row){
+            header("Location:index.php?error=notfound");
             exit();
         }
 
-        // Lấy giá phòng
-        $sqlPrice = "SELECT rt.price FROM rooms r JOIN room_types rt
-                        ON r.room_type_id = rt.room_type_id
-                        WHERE r.room_id='$room_id' ";
+        $customers = mysqli_query($conn,"SELECT * FROM customers ORDER BY full_name");
 
-        $priceResult = mysqli_query($conn,$sqlPrice);
-        $priceRow = mysqli_fetch_assoc($priceResult);
+        $rooms = mysqli_query($conn,"SELECT 
+                                        r.room_id, 
+                                        r.room_number, 
+                                        rt.type_name
+                                    FROM rooms r JOIN room_types rt 
+                                        ON r.room_type_id = rt.room_type_id
+                                    WHERE r.status = 'Trống' 
+                                        OR r.room_id = '".$row['room_id']."' ");
 
-        $price = $priceRow['price'];
-
-        $days = ceil(
-            (strtotime($check_out)-strtotime($check_in))/86400
-        );
-
-        if($days <= 0) {
-            $days = 1;
+        //Không cho sửa booking đã trả phòng
+        if($row['status'] == 'Đã trả phòng'|| $row['status'] == 'Đã hủy'){
+            header("Location: index.php?error=checkout_error");
+            exit();
         }
-
-        $total = $price * $days;
-
-        // Lấy phòng cũ
-        $oldRoom = mysqli_query($conn,"SELECT room_id 
-                                        FROM booking_details 
-                                        WHERE booking_id='$id'");
-        $old = mysqli_fetch_assoc($oldRoom);
-
-        // Trả phòng cũ về trạng thái Trống
-        mysqli_query($conn,"UPDATE rooms
-                        SET status='Trống'
-                        WHERE room_id='".$old['room_id']."' ");
-
-        // Cập nhật booking
-        mysqli_query($conn,"UPDATE bookings
-                            SET customer_id='$customer_id',
-                                check_in_date='$check_in',
-                                check_out_date='$check_out',
-                                status='$status',
-                                total_amount='$total',
-                                note='$note'
-                            WHERE booking_id='$id' ");
-
-        // Xóa booking detail cũ
-        mysqli_query($conn,"DELETE FROM booking_details WHERE booking_id='$id' ");
-        
-        // Thêm booking detail mới
-        mysqli_query($conn,"INSERT INTO booking_details(booking_id, room_id, price)
-                            VALUES('$id', '$room_id', '$price')");
-
-        // Cập nhật trạng thái phòng mới
-        if($status == 'Đã xác nhận'){
-            $roomStatus = "Đã đặt";
-        }elseif($status == 'Đang thuê'){
-            $roomStatus = "Đang thuê";
-        }else{
-            $roomStatus = "Trống";
-        }
-
-        mysqli_query($conn," UPDATE rooms
-            SET status='$roomStatus'
-            WHERE room_id='$room_id'
-        ");
-
-        header("Location:index.php");
-        exit();
-    }
-
-    // Lấy thông tin booking
-    $sql = "SELECT b.*, bd.room_id
-            FROM bookings b
-            JOIN booking_details bd
-            ON b.booking_id=bd.booking_id
-            WHERE b.booking_id='$id'";
-
-    $result = mysqli_query($conn,$sql);
-    $row = mysqli_fetch_assoc($result);
-
-    $customers = mysqli_query($conn,"SELECT * FROM customers ORDER BY full_name");
-
-    $rooms = mysqli_query($conn,"SELECT r.room_id, r.room_number, rt.type_name
-                                FROM rooms r JOIN room_types rt 
-                                ON r.room_type_id = rt.room_type_id
-                                WHERE r.status = 'Trống' 
-                                OR r.room_id = '".$row['room_id']."' ");
-
-    //Không cho sửa booking đã trả phòng
-    if($row['status'] == 'Đã trả phòng'){
-        echo "<script>
-            alert('Không thể sửa đơn đã trả phòng!');
-            location='index.php';
-        </script>";
-        exit();
-    }
+    
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Sửa đặt phòng</title>
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
-
-</head>
-
-<body>
 
     <div class="container mt-4">
 
@@ -239,5 +250,4 @@
 
     </div>
 
-</body>
-</html>
+<?php include __DIR__.'/../../includes/footer.php'; ?>

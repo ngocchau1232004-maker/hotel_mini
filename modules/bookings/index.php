@@ -1,9 +1,12 @@
 <?php
     include '../../includes/auth.php';
     include '../../config/database.php';
+    include '../../includes/header.php';
 
-    $sql = "
-        SELECT
+    /** @var mysqli $conn */
+        $conn = $conn;
+
+    $sql = "SELECT
             b.booking_id,
             c.full_name,
             GROUP_CONCAT(r.room_number) AS rooms,
@@ -12,9 +15,7 @@
             b.status,
             b.total_amount
         FROM bookings b
-
-        JOIN customers c
-            ON b.customer_id = c.customer_id
+        JOIN customers c ON b.customer_id = c.customer_id
 
         LEFT JOIN booking_details bd
             ON b.booking_id = bd.booking_id
@@ -28,102 +29,115 @@
     ";
 
     $result = mysqli_query($conn,$sql);
+
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý đặt phòng</title>
+<div class="container-fluid px-0">  
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
+            <h4 class="mb-0">
+                <i class="bi bi-calendar-check"></i>
+                Danh sách đặt phòng
+            </h4>
 
-</head>
-
-
-<body>
-    
-    <div class="container mt-4">        
-        <a href="../../dashboard.php"class="btn btn-outline-primary mb-3" >
-            <i class="bi bi-arrow-left" "></i>
-            Quay lại danh sách
-        </a>
-
-        <h2>Danh sách đặt phòng</h2>
-
-        <table class="table table-bordered">
-            <a href="create.php" class="btn btn-success mb-3" >
-                + Thêm đặt phòng
+            <a href="create.php" class="btn btn-light">
+                <i class="bi bi-plus-circle"></i>
+                Thêm đặt phòng
             </a>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Khách hàng</th>
-                    <th>Phòng</th>
-                    <th>Ngày nhận phòng</th>
-                    <th>Ngày trả phòng</th>
-                    <th>Trạng thái</th>
-                    <th>Tổng tiền</th>
-                    <th>Chức năng</th>
-                </tr>
-            </thead>
 
-            <tbody>
-                <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+        </div>
+        
+        <div class="table-responsive">
+            <?php include '../../includes/alert.php'; ?>
+
+            <table class="table table-bordered table-hover align-middle">
+                <thead>
                     <tr>
-
-                        <td><?= $row['booking_id']; ?></td>
-                        <td><?= htmlspecialchars($row['full_name']); ?></td>
-                        <td><?= $row['rooms']; ?></td>
-                        <td><?= $row['check_in_date']; ?></td>
-                        <td><?= $row['check_out_date']; ?></td>
-                        <td><?= $row['status']; ?></td>
-
-                        <td>
-                            <?= number_format($row['total_amount'], 0, ',', '.'); ?> VNĐ
-                        </td>
-
-                        <td>
-                            <a href="detail.php?id=<?= $row['booking_id']; ?>"
-                                class="btn btn-info btn-sm">
-                                Chi tiết
-                            </a>
-
-                            <a class="btn btn-warning btn-sm"
-                            href="edit.php?id=<?= $row['booking_id']; ?>">
-                                Sửa
-                            </a>
-
-                            <?php if($row['status'] == 'Đã đặt'){ ?>
-                                <a href="checkin.php?id=<?= $row['booking_id']; ?>"
-                                    class="btn btn-success btn-sm"
-                                    onclick="return confirm('Xác nhận check-in?')">
-                                    Check-in
-                                </a>
-                            <?php } ?>
-
-                            <?php if($row['status'] == 'Đang thuê'){ ?>
-                                <a href="checkout.php?id=<?= $row['booking_id']; ?>"
-                                    class="btn btn-secondary btn-sm"
-                                    onclick="return confirm('Xác nhận trả phòng?')">
-                                    Check-out
-                                </a>
-                            <?php } ?>
-
-                            <a class="btn btn-danger btn-sm"
-                                href="delete.php?id=<?= $row['booking_id']; ?>"
-                                onclick="return confirm('Bạn có chắc muốn xóa?')">
-                                    Xóa
-                            </a>
-                        </td>
+                        <th>ID</th>
+                        <th>Khách hàng</th>
+                        <th>Phòng</th>
+                        <th>Ngày nhận phòng</th>
+                        <th>Ngày trả phòng</th>
+                        <th>Trạng thái</th>
+                        <th>Tổng tiền</th>
+                        <th>Chức năng</th>
                     </tr>
-                <?php endwhile; ?>
-            </tbody>
+                </thead>
 
-        </table>
+                <tbody>
+                    <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                        <tr>
+
+                            <td><?= $row['booking_id']; ?></td>
+                            <td><?= htmlspecialchars($row['full_name']); ?></td>
+                            <td><?= $row['rooms']; ?></td>
+                            <td><?= $row['check_in_date']; ?></td>
+                            <td><?= $row['check_out_date']; ?></td>
+                            <td>
+                                <?php
+                                    $status = $row['status'];
+
+                                    if($status=='Đã đặt'){
+                                        echo '<span class="badge bg-warning">Đã đặt</span>';
+                                    }
+                                    elseif($status=='Đang thuê'){
+                                        echo '<span class="badge bg-success">Đang thuê</span>';
+                                    }
+                                    elseif($status=='Đã trả phòng'){
+                                        echo '<span class="badge bg-primary">Đã trả phòng</span>';
+                                    }
+                                    else{
+                                        echo '<span class="badge bg-danger">Đã hủy</span>';
+                                    }
+                                ?>
+                            </td>
+
+                            <td>
+                                <?= number_format($row['total_amount'], 0, ',', '.'); ?> VNĐ
+                            </td>
+
+                            <td>
+                                <a href="detail.php?id=<?= $row['booking_id']; ?>"
+                                    class="btn btn-info btn-sm">
+                                    Chi tiết
+                                </a>
+
+                                <a class="btn btn-warning btn-sm"
+                                href="edit.php?id=<?= $row['booking_id']; ?>">
+                                    Sửa
+                                </a>
+
+                                <a class="btn btn-danger btn-sm"
+                                    href="delete.php?id=<?= $row['booking_id']; ?>"
+                                    onclick="return confirm('Bạn có chắc muốn xóa?')">
+                                        Xóa
+                                </a>
+                                
+                                <?php if($row['status'] == 'Đã đặt'){ ?>
+                                    <a href="checkin.php?id=<?= $row['booking_id']; ?>"
+                                        class="btn btn-success btn-sm"
+                                        onclick="return confirm('Xác nhận check-in?')">
+                                        Check-in
+                                    </a>
+                                <?php } ?>
+
+                                <?php if($row['status'] == 'Đang thuê'){ ?>
+                                    <a href="checkout.php?id=<?= $row['booking_id']; ?>"
+                                        class="btn btn-secondary btn-sm"
+                                        onclick="return confirm('Xác nhận trả phòng?')">
+                                        Check-out
+                                    </a>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+
+            </table>
+        </div>
     </div>
-</body>
-</html>
+</div>
+
+    
+<?php include '../../includes/footer.php'; ?>

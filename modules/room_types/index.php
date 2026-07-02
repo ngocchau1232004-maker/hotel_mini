@@ -1,80 +1,86 @@
 <?php
     include '../../includes/auth.php';
     include '../../config/database.php';
+    include '../../includes/header.php';
 
     /** @var mysqli $conn */
-    $conn = $conn;
+    $sql = "SELECT * FROM room_types ORDER BY room_type_id DESC";
+    $result = mysqli_query($conn, $sql);
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Loại phòng</title>
+<div class="container-fluid">
+    <div class="card shadow">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
+        <!-- HEADER -->
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            
+            <h4 class="mb-0">
+                <i class="bi bi-grid"></i>
+                Danh sách loại phòng
+            </h4>
 
-</head>
+            <a href="create.php" class="btn btn-light">
+                <i class="bi bi-plus-circle"></i>
+                Thêm loại phòng
+            </a>
 
-<body>
+        </div>
 
-    <div class="container mt-4">
-        <a href="../../dashboard.php"class="btn btn-outline-primary mb-3">
-            <i class="bi bi-arrow-left"></i>
-            Quay lại danh sách
-        </a>
+        <!-- BODY -->
+        <div class="card-body">
 
-        <h2>Quản lý loại phòng</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
 
-        <a href="create.php"
-            class="btn btn-success mb-3">
-            Thêm loại phòng
-        </a>
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên loại</th>
+                            <th>Giá</th>
+                            <th>Số người</th>
+                            <th>Mô tả</th>
+                            <th width="120">Thao tác</th>
+                        </tr>
+                    </thead>
 
-        <table class="table table-bordered">
-            <tr>
-                <th>ID</th>
-                <th>Tên loại</th>
-                <th>Giá</th>
-                <th>Số người</th>
-                <th>Mô tả</th>
-                <th>Thao tác</th>
-            </tr>
+                    <tbody>
+                        <?php if (mysqli_num_rows($result) > 0) { ?>
+                            <?php while($row = mysqli_fetch_assoc($result)) { ?>
+                                <tr>
+                                    <td><?php echo $row['room_type_id']; ?></td>
+                                    <td><?php echo $row['type_name']; ?></td>
+                                    <td><?php echo number_format($row['price']); ?> VNĐ</td>
+                                    <td><?php echo $row['max_people']; ?></td>
+                                    <td><?php echo $row['description']; ?></td>
 
-            <?php
-                $sql = "SELECT * FROM room_types";
-                $result = mysqli_query($conn,$sql);
+                                    <td>
+                                        <a href="edit.php?id=<?php echo $row['room_type_id']; ?>"
+                                           class="btn btn-warning btn-sm">
+                                            Sửa
+                                        </a>
 
-                while($row = mysqli_fetch_assoc($result)){
-                ?>
-                    <tr>
-                        <td><?= $row['room_type_id']; ?></td>
-                        <td><?= $row['type_name']; ?></td>
-                        <td><?= number_format($row['price']); ?> VNĐ</td>
-                        <td><?= $row['max_people']; ?></td>
-                        <td><?= $row['description']; ?></td>
+                                        <a href="delete.php?id=<?php echo $row['room_type_id']; ?>"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Bạn có chắc muốn xóa loại phòng này?')">
+                                            Xóa
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    Không có dữ liệu
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </tbody>
 
-                        <td>
-                            <a href="edit.php?id=<?= $row['room_type_id']; ?>"
-                                class="btn btn-warning btn-sm">
-                                Sửa
-                            </a>
+                </table>
+            </div>
 
-                            <a href="delete.php?id=<?= $row['room_type_id']; ?>"
-                                class="btn btn-danger btn-sm" onclick="return confirm('Xóa?')">
-                                Xóa
-                            </a>
-
-                        </td>
-                    </tr>
-                <?php 
-                } 
-            ?>
-
-        </table>
+        </div>
     </div>
+</div>
 
-</body>
-</html>
+<?php include __DIR__.'/../../includes/footer.php'; ?>

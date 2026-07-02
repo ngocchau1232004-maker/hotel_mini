@@ -238,3 +238,6 @@ CREATE TABLE payments (
 
 INSERT INTO payments(invoice_id,payment_method,amount)
     VALUES(1,'Chuyển khoản',650000);
+
+ALTER TABLE booking_details
+ADD days INT DEFAULT 1;

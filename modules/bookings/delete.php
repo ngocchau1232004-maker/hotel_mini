@@ -2,32 +2,43 @@
     include '../../includes/auth.php';
     include '../../config/database.php';
 
-    $id = $_GET['id'];
+    /** @var mysqli $conn */
+    $conn = $conn;
 
-    // Lấy danh sách phòng của booking
-    $rooms = mysqli_query($conn,"SELECT room_id FROM booking_details WHERE booking_id='$id' ");
+    $id = intval($_GET['id']);
 
-    while($room=mysqli_fetch_assoc($rooms)){
-        mysqli_query($conn,"UPDATE rooms SET status='Trống' 
-                            WHERE room_id='".$room['room_id']."' ");
-    }
+    // Lấy trạng thái booking
+    $result = mysqli_query($conn,"SELECT status
+                                    FROM bookings 
+                                    WHERE booking_id='$id'");
 
-    // Xóa booking
-    // booking_details sẽ tự xóa do ON DELETE CASCADE
-    mysqli_query($conn,"DELETE FROM bookings WHERE booking_id='$id' ");
-
-    //Không cho xóa booking đang thuê
-    $sql = mysqli_query($conn,"SELECT status FROM bookings WHERE booking_id='$id' ");
-    $row = mysqli_fetch_assoc($sql);
-
-    if($row['status'] == 'Đang thuê'){
-        echo "<script>
-            alert('Không thể xóa phòng đang thuê!');
-            location='index.php';
-        </script>";
+    if(mysqli_num_rows($result) == 0){
+        header("Location:index.php?error=notfound");
         exit();
     }
 
-    header("Location:index.php");
+    $row = mysqli_fetch_assoc($result);
+
+    // Không cho xóa booking đang thuê hoặc đã trả phòng
+    if($row['status'] == 'Đang thuê' || $row['status'] == 'Đã trả phòng'){
+        header("Location:index.php?error=delete_error");
+        exit();
+    }
+
+    // Trả phòng về trạng thái Trống
+    $rooms = mysqli_query($conn,"SELECT room_id
+                                FROM booking_details
+                                WHERE booking_id='$id'");
+
+    while($room = mysqli_fetch_assoc($rooms)){
+        mysqli_query($conn,"UPDATE rooms SET status='Trống'
+                            WHERE room_id='".$room['room_id']."'");
+    }
+
+    // Xóa booking
+    // booking_details sẽ tự xóa nhờ ON DELETE CASCADE
+    mysqli_query($conn,"DELETE FROM bookings WHERE booking_id='$id'");
+    
+    header("Location:index.php?success=delete");
     exit();
 ?>

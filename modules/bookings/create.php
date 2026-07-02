@@ -1,6 +1,7 @@
 <?php
     include '../../includes/auth.php';
     include '../../config/database.php';
+    include '../../includes/header.php';
 
     if(isset($_POST['save'])){
         mysqli_begin_transaction($conn);
@@ -155,37 +156,21 @@
     }
 
     // Khách hàng
-    $customers = mysqli_query($conn,"
-        SELECT *
-        FROM customers
-        ORDER BY full_name
-    ");
+    $customers = mysqli_query($conn,"SELECT * FROM customers 
+                                        ORDER BY full_name");
 
     // Phòng trống
-    $rooms = mysqli_query($conn,"
-        SELECT
-            r.room_id,
-            r.room_number,
-            rt.type_name,
-            rt.price
-        FROM rooms r
-        JOIN room_types rt
-            ON r.room_type_id = rt.room_type_id
-        WHERE r.status='Trống'
-    ");
+    $rooms = mysqli_query($conn,"SELECT
+                                    r.room_id,
+                                    r.room_number,
+                                    rt.type_name,
+                                    rt.price
+                                FROM rooms r
+                                JOIN room_types rt
+                                    ON r.room_type_id = rt.room_type_id
+                                WHERE r.status='Trống' ");
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Thêm đặt phòng</title>
-
-    <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-</head>
-
-<body>
 
     <div class="container mt-4">
 
@@ -303,9 +288,8 @@
             <a href="index.php" class="btn btn-secondary">
                 Quay lại
             </a>
-
         </form>
-
+        
     </div>
 
     <script>
@@ -334,5 +318,4 @@
         toggleCustomer();
     </script>
 
-</body>
-</html>
+<?php include __DIR__ . '/../../includes/footer.php'; ?>
