@@ -38,7 +38,6 @@
                             <th>Email</th>
                             <th>CCCD</th>
                             <th>Địa chỉ</th>
-                            <th>Số phòng</th>
                             <th>Ngày tạo</th>
                             <th width="160">Thao tác</th>
                         </tr>
@@ -55,10 +54,6 @@
                                 <td><?= $row['email']; ?></td>
                                 <td><?= $row['id_card']; ?></td>
                                 <td><?= $row['address']; ?></td>
-
-                                <!-- chưa có join nên để tạm -->
-                                <td>---</td>
-
                                 <td><?= $row['created_at']; ?></td>
 
                                 <td>

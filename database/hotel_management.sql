@@ -160,6 +160,9 @@ INSERT INTO booking_details(booking_id,room_id,price)
         (3,7,500000),
         (4,8,500000);
 
+ALTER TABLE booking_details
+ADD days INT DEFAULT 1;       
+
 
 -- services (dịch vụ)
 CREATE TABLE services (
@@ -239,5 +242,3 @@ CREATE TABLE payments (
 INSERT INTO payments(invoice_id,payment_method,amount)
     VALUES(1,'Chuyển khoản',650000);
 
-ALTER TABLE booking_details
-ADD days INT DEFAULT 1;
