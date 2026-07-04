@@ -1,4 +1,9 @@
-CREATE DATABASE hotel_management;
+DROP DATABASE IF EXISTS hotel_management;
+
+CREATE DATABASE hotel_management
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
 USE hotel_management;
 
 
@@ -144,24 +149,22 @@ CREATE TABLE booking_details (
     booking_id INT NOT NULL,
     room_id INT NOT NULL,
     price INT NOT NULL,
+    days INT DEFAULT 1,
 
     FOREIGN KEY (booking_id)
-    REFERENCES bookings(booking_id)
-    ON DELETE CASCADE,
+        REFERENCES bookings(booking_id)
+        ON DELETE CASCADE,
 
     FOREIGN KEY (room_id)
-    REFERENCES rooms(room_id)
+        REFERENCES rooms(room_id)
 );
- 
-INSERT INTO booking_details(booking_id,room_id,price)
-    VALUES
-        (1,1,150000),
-        (2,4,250000),
-        (3,7,500000),
-        (4,8,500000);
 
-ALTER TABLE booking_details
-ADD days INT DEFAULT 1;       
+INSERT INTO booking_details(booking_id,room_id,price,days)
+    VALUES
+        (1,1,150000,2),
+        (2,4,250000,1),
+        (3,7,500000,2),
+        (4,8,500000,2);      
 
 
 -- services (dịch vụ)
@@ -225,6 +228,7 @@ INSERT INTO invoices(booking_id,room_total,service_total,total_amount)
 CREATE TABLE payments (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
     invoice_id INT NOT NULL,
+
 
     payment_method ENUM(
         'Tiền mặt',
