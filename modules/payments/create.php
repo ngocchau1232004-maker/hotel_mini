@@ -4,74 +4,68 @@ include '../../config/database.php';
 include '../../includes/header.php';
 
 /** @var mysqli $conn */
-$conn = $conn;
 
 if (!isset($_GET['id'])) {
     header("Location:../invoices/index.php");
     exit();
 }
 
-$invoice_id = intval($_GET['id']);
+$invoice_id = (int)$_GET['id'];
+
+/*=========================================
+= Lấy thông tin hóa đơn
+=========================================*/
 
 $sql = "
 SELECT
     i.*,
     b.booking_id,
     c.full_name
-
 FROM invoices i
-
 JOIN bookings b
-ON i.booking_id = b.booking_id
-
+    ON i.booking_id = b.booking_id
 JOIN customers c
-ON b.customer_id = c.customer_id
-
-WHERE i.invoice_id = '$invoice_id'
+    ON b.customer_id = c.customer_id
+WHERE i.invoice_id = $invoice_id
+LIMIT 1
 ";
 
 $result = mysqli_query($conn, $sql);
 
-if (mysqli_num_rows($result) == 0) {
+if (!$result || mysqli_num_rows($result) == 0) {
+
     echo "<div class='alert alert-danger m-3'>
             Không tìm thấy hóa đơn.
           </div>";
+
     include '../../includes/footer.php';
     exit();
 }
 
 $invoice = mysqli_fetch_assoc($result);
 
-/*
-|--------------------------------------------------------------------------
-| Kiểm tra đã thanh toán chưa
-|--------------------------------------------------------------------------
-*/
+/*=========================================
+= Kiểm tra đã thanh toán
+=========================================*/
 
-$check = mysqli_query($conn,"
-SELECT *
+$paid = mysqli_query($conn,"
+SELECT payment_id
 FROM payments
-WHERE invoice_id='$invoice_id'
+WHERE invoice_id = $invoice_id
+LIMIT 1
 ");
 
-if(mysqli_num_rows($check)>0){
+if(mysqli_num_rows($paid)>0){
 
-    echo "<script>
+    $payment = mysqli_fetch_assoc($paid);
 
-        alert('Hóa đơn đã được thanh toán.');
-
-        window.location='../payments/index.php';
-
-    </script>";
-
+    header("Location:detail.php?id=".$payment['payment_id']);
     exit();
 }
 
-/*
-|--------------------------------------------------------------------------
-| Lưu thanh toán
-|--------------------------------------------------------------------------
-*/
+/*=========================================
+= Thanh toán
+=========================================*/
 
 if(isset($_POST['save'])){
 
@@ -80,178 +74,206 @@ if(isset($_POST['save'])){
         $_POST['payment_method']
     );
 
-    $amount = intval($_POST['amount']);
+    $amount = (int)$_POST['amount'];
 
-    mysqli_query($conn,"
-        INSERT INTO payments(
-            invoice_id,
-            payment_method,
-            amount
-        )
-        VALUES(
-            '$invoice_id',
-            '$payment_method',
-            '$amount'
-        )
-    ");
+    mysqli_begin_transaction($conn);
 
-    echo "<script>
+    try{
 
-        alert('Thanh toán thành công.');
+        if(!mysqli_query($conn,"
+            INSERT INTO payments(
+                invoice_id,
+                payment_method,
+                amount
+            )
+            VALUES(
+                $invoice_id,
+                '$payment_method',
+                $amount
+            )
+        ")){
+            throw new Exception(mysqli_error($conn));
+        }
 
-        window.location='../payments/index.php';
+        $payment_id = mysqli_insert_id($conn);
 
-    </script>";
+        if(!mysqli_query($conn,"
+            UPDATE bookings
+            SET
+                status='Đã trả phòng',
+                actual_check_out = NOW()
+            WHERE booking_id=".$invoice['booking_id']."
+        ")){
+            throw new Exception(mysqli_error($conn));
+        }
 
-    exit();
+        if(!mysqli_query($conn,"
+            UPDATE rooms r
+            JOIN booking_details bd
+                ON r.room_id = bd.room_id
+            SET
+                r.status='Trống'
+            WHERE bd.booking_id=".$invoice['booking_id']."
+        ")){
+            throw new Exception(mysqli_error($conn));
+        }
+
+        mysqli_commit($conn);
+
+        header("Location:detail.php?id=".$payment_id);
+        exit();
+
+    }catch(Exception $e){
+
+        mysqli_rollback($conn);
+
+        echo "<div class='container mt-3'>
+                <div class='alert alert-danger'>
+                    ".$e->getMessage()."
+                </div>
+              </div>";
+
+        include '../../includes/footer.php';
+        exit();
+    }
 }
 ?>
 
 <div class="container-fluid">
 
-<div class="row justify-content-center">
+    <div class="row justify-content-center">
 
-<div class="col-lg-6">
+        <div class="col-lg-6">
 
-<div class="card">
+            <div class="card shadow">
 
-<div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white">
 
-<h4 class="mb-0">
+                    <h4 class="mb-0">
+                        Thanh toán hóa đơn
+                    </h4>
 
-Thanh toán hóa đơn
+                </div>
 
-</h4>
+                <div class="card-body">
 
-</div>
+                    <form method="post">
 
-<div class="card-body">
+                        <div class="mb-3">
 
-<form method="post">
+                            <label class="form-label">
 
-<div class="mb-3">
+                                Khách hàng
 
-<label class="form-label">
+                            </label>
 
-Khách hàng
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="<?= htmlspecialchars($invoice['full_name']) ?>"
+                                readonly>
 
-</label>
+                        </div>
 
-<input
-type="text"
-class="form-control"
-value="<?= htmlspecialchars($invoice['full_name']) ?>"
-readonly>
+                        <div class="mb-3">
 
-</div>
+                            <label class="form-label">
 
-<div class="mb-3">
+                                Mã hóa đơn
 
-<label class="form-label">
+                            </label>
 
-Mã hóa đơn
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="#<?= $invoice['invoice_id'] ?>"
+                                readonly>
 
-</label>
+                        </div>
 
-<input
-type="text"
-class="form-control"
-value="#<?= $invoice['invoice_id'] ?>"
-readonly>
+                        <div class="mb-3">
 
-</div>
+                            <label class="form-label">
 
-<div class="mb-3">
+                                Tổng thanh toán
 
-<label class="form-label">
+                            </label>
 
-Tổng tiền
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="<?= number_format($invoice['total_amount']) ?> đ"
+                                readonly>
 
-</label>
+                            <input
+                                type="hidden"
+                                name="amount"
+                                value="<?= $invoice['total_amount'] ?>">
 
-<input
-type="text"
-class="form-control"
-value="<?= number_format($invoice['total_amount']) ?> VNĐ"
-readonly>
+                        </div>
 
-<input
-type="hidden"
-name="amount"
-value="<?= $invoice['total_amount'] ?>">
+                        <div class="mb-3">
 
-</div>
+                            <label class="form-label">
 
-<div class="mb-3">
+                                Phương thức thanh toán
 
-<label class="form-label">
+                            </label>
 
-Phương thức thanh toán
+                            <select
+                                name="payment_method"
+                                class="form-select"
+                                required>
 
-</label>
+                                <option value="Tiền mặt">
+                                    Tiền mặt
+                                </option>
 
-<select
-name="payment_method"
-class="form-select"
-required>
+                                <option value="Chuyển khoản">
+                                    Chuyển khoản
+                                </option>
 
-<option value="Tiền mặt">
+                                <option value="Momo">
+                                    Momo
+                                </option>
 
-Tiền mặt
+                            </select>
 
-</option>
+                        </div>
 
-<option value="Chuyển khoản">
+                        <div class="d-flex gap-2 justify-content-center">
 
-Chuyển khoản
+                            <button
+                                type="submit"
+                                name="save"
+                                class="btn btn-success">
 
-</option>
+                                <i class="fa fa-money-bill"></i>
 
-<option value="Momo">
+                                Xác nhận thanh toán
 
-Momo
+                            </button>
 
-</option>
+                            <a
+                                href="../invoices/detail.php?id=<?= $invoice['invoice_id'] ?>"
+                                class="btn btn-secondary">
 
-</select>
+                                Quay lại
 
-</div>
+                            </a>
 
-<div class="text-center">
+                        </div>
 
-<button
-type="submit"
-name="save"
-class="btn btn-success">
+                    </form>
 
-<i class="fa fa-money-bill"></i>
+                </div>
 
-Xác nhận thanh toán
+            </div>
 
-</button>
+        </div>
 
-<a
-href="../invoices/detail.php?id=<?= $invoice_id ?>"
-class="btn btn-secondary">
-
-Quay lại
-
-</a>
-
-</div>
-
-</form>
-
-</div>
+    </div>
 
 </div>
 
-</div>
-
-</div>
-
-</div>
-
-<?php
-include '../../includes/footer.php';
-?>
+<?php include '../../includes/footer.php'; ?>
