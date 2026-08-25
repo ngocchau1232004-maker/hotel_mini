@@ -18,7 +18,8 @@
 
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['full_name'] = $user['full_name'];
-
+            $_SESSION['role_id'] = (int)$user['role_id'];
+            
             header('Location: dashboard.php');
 
         }else{

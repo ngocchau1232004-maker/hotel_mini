@@ -244,7 +244,7 @@ ORDER BY su.usage_date DESC
 
                 <div class="col-md-3">
 
-                    <strong>Thực tế</strong><br>
+                    <strong>Ngày Check-out Thực tế</strong><br>
 
                     <?= $invoice['actual_check_out']
                         ? date("d/m/Y H:i", strtotime($invoice['actual_check_out']))
@@ -571,4 +571,4 @@ ORDER BY su.usage_date DESC
 
 </div>
 
-<?php include '../../includes/footer.php'; ?>
+<?php include __DIR__.'/../../includes/footer.php'; ?>

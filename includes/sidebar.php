@@ -10,6 +10,14 @@
 
         </a>
 
+        <?php if (isset($_SESSION['role_id']) && (int)$_SESSION['role_id'] === 1): ?>
+        <a href="/hotel_mini/modules/users/index.php">
+            <i class="bi bi-person-gear"></i>
+            <span>Quản lý tài khoản</span>
+        </a>
+        <?php endif; ?>
+
+
         <a href="/hotel_mini/modules/room_types/index.php">
             <i class="bi bi-grid"></i>
             <span>Loại phòng</span>
@@ -49,6 +57,8 @@
             <i class="bi bi-bar-chart"></i>
             <span>Báo cáo</span>
         </a>
+
+        
     <hr>
 
 </div>

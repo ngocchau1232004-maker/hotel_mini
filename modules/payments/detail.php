@@ -21,6 +21,7 @@
                 b.booking_id,
                 b.check_in_date,
                 b.check_out_date,
+                b.actual_check_out,
                 c.full_name,
                 c.phone,
                 c.email,
@@ -121,6 +122,15 @@
                 <tr>
                     <th>Check Out</th>
                     <td><?= $row['check_out_date'] ?></td>
+                </tr>
+
+                <tr>
+                    <th>Ngày Check-out Thực tế</th>
+                    <td>
+                        <?= $row['actual_check_out']
+                            ? date("d/m/Y H:i", strtotime($row['actual_check_out']))
+                            : "Chưa trả phòng"; ?>
+                    </td>
                 </tr>
 
                 <tr>
